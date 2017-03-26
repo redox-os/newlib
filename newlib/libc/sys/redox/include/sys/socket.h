@@ -14,14 +14,14 @@ typedef uint32_t in_addr_t;
 #define SOCK_STREAM 1
 #define SOCK_DGRAM 2
 
-#define	SO_KEEPALIVE 0x0008
-
-#define	SOL_SOCKET 0xffff
-
 #define	IPPROTO_IP 0
 #define	IPPROTO_ICMP 1
 #define	IPPROTO_TCP 6
 #define	IPPROTO_UDP 17
+
+#define SO_KEEPALIVE 0x0008
+
+#define SOL_SOCKET 0xffff
 
 struct sockaddr {
     sa_family_t sa_family;
