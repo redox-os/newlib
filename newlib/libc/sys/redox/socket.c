@@ -9,25 +9,28 @@
 
 #include "common.h"
 
-#define DUP(file, buf) syscall3(SYS_DUP, (uint64_t)file, buf, strlen(buf))
+#define DUP(file, buf) syscall3(SYS_DUP, (uint64_t)file, (uint64_t)buf, (uint64_t)strlen(buf))
 
 static struct hostent _host_entry;
 static char *_h_addr_list[2];
 static char _h_addr[4];
 static char* _h_aliases[1];
 static char _h_name[16];
+static char _ntoa_addr[16];
 
-static int _parse_ip(const char *addr, unsigned char* ip) {
-    if (sscanf(addr, "%hhu.%hhu.%hhu.%hhu", &ip[0], &ip[1], &ip[2], &ip[3]) != 4)
-        return -1;
-    return 0;
+int inet_aton(const char *cp, struct in_addr *inp) {
+    // XXX handle variants with less than 3 .'s
+    unsigned char *ip = &inp->s_addr;
+    if (sscanf(cp, "%hhu.%hhu.%hhu.%hhu", &ip[0], &ip[1], &ip[2], &ip[3]) != 4)
+        return 0;
+    return 1;
 }
 
-static char* addr_to_str(const struct sockaddr_in* insock) {
-    unsigned char *addr = (unsigned char*)(&insock->sin_addr.s_addr);
-    char **str;
-    asprintf(str, "%hhu.%hhu.%hhu.%hhu:" SCNu16, addr[0], addr[1], addr[2], addr[3], insock->sin_port);
-    return *str;
+char *inet_ntoa(struct in_addr in) {
+    unsigned char *addr = (unsigned char*)(&in.s_addr);
+    sprintf(&_ntoa_addr, "%hhu.%hhu.%hhu.%hhu",
+            addr[0], addr[1], addr[2], addr[3]);
+    return &_ntoa_addr;
 }
 
 int socket(int domain, int type, int protocol) {
@@ -36,21 +39,29 @@ int socket(int domain, int type, int protocol) {
     assert(type == SOCK_STREAM || type == SOCK_DGRAM);
 
     if (type == SOCK_STREAM)
-        return open("tcp:", O_RDONLY);
+        return open("tcp:", O_RDWR);
     else if (type == SOCK_DGRAM)
-        return open("udp:", O_RDONLY);
+        return open("udp:", O_RDWR);
 }
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len) {
+    // XXX with UDP, should recieve messages only from that peer after this
+    // XXX errno
     //XXX
-    char *addr = addr_to_str((struct sockaddr_in*)address);
+    assert(address->sa_family == AF_INET);
+    char *addr = inet_ntoa(((struct sockaddr_in*)address)->sin_addr);
+    char *path = malloc(22);
+    sprintf(path, "%s:%d", addr, ntohs(((struct sockaddr_in*)address)->sin_port));
 
-    int fd = DUP(socket, addr);
-    free(addr);
+    int fd = DUP(socket, path);
+    free(path);
     if (fd == -1)
         return -1;
-    if (dup2(fd, socket) == -1)
+    if (dup2(fd, socket) == -1) {
+        close(fd);
         return -1;
+    }
+    close(fd);
 
     return 0;
 }
@@ -82,6 +93,7 @@ int listen(int socket, int backlog) {
 }
 
 int accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len) {
+    //getpeername(socket, address, address_len)
 }
 
 ssize_t recvfrom(int socket, void *restrict buffer, size_t length,
@@ -102,7 +114,8 @@ ssize_t sendto(int socket, const void *message, size_t length,
                int flags, const struct sockaddr *dest_addr,
                socklen_t dest_len) {
     //XXX
-    char *addr = addr_to_str((struct sockaddr_in*)dest_addr);
+    assert(dest_addr->sa_family == AF_INET);
+    char *addr = inet_ntoa(((struct sockaddr_in*)dest_addr)->sin_addr);
 
     int fd = DUP(socket, addr);
     free(addr);
@@ -136,7 +149,7 @@ uint16_t ntohs(uint16_t netshort) {
 struct hostent *gethostbyname(const char *name) {
     //TODO: handle domain names
 
-    if (_parse_ip(name, _h_addr) == -1)
+    if (inet_aton(name, (struct in_addr*)(&_h_addr)) == 0)
         return NULL;
 
     _h_addr_list[0] = _h_addr;
