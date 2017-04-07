@@ -34,29 +34,45 @@ char *inet_ntoa(struct in_addr in) {
 }
 
 int socket(int domain, int type, int protocol) {
+    printf( "socket(%d, %d, %d)\n", domain, type, protocol);
     assert(domain == AF_INET);
     assert(protocol == 0); // XXX These asserts should be removed
     assert(type == SOCK_STREAM || type == SOCK_DGRAM);
 
-    if (type == SOCK_STREAM)
-        return open("tcp:", O_RDWR);
-    else if (type == SOCK_DGRAM)
-        return open("udp:", O_RDWR);
+    int ret = 42;
+    perror("open");
+    if (type == SOCK_STREAM) {
+	printf("TCP\n");
+        ret = open("tcp:", O_RDWR);
+    }
+    else if (type == SOCK_DGRAM) {
+	printf("UDP\n");
+        ret = open("udp:", O_RDWR);
+    }
+    printf("ret: %d\n", ret);
+    if (ret == -1) {
+	perror("open");
+    }
+    return ret;
 }
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len) {
     // XXX with UDP, should recieve messages only from that peer after this
     // XXX errno
+    printf("connect()\n");
     //XXX
     assert(address->sa_family == AF_INET);
     char *addr = inet_ntoa(((struct sockaddr_in*)address)->sin_addr);
     char *path = malloc(22);
     sprintf(path, "%s:%d", addr, ntohs(((struct sockaddr_in*)address)->sin_port));
 
+    printf("path: %s\n", path);
+    printf("DUP\n");
     int fd = DUP(socket, path);
     free(path);
     if (fd == -1)
         return -1;
+    printf("dup2\n");
     if (dup2(fd, socket) == -1) {
         close(fd);
         return -1;
@@ -67,38 +83,47 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len) {
 }
 
 int setsockopt(int socket, int level, int option_name, const void *option_value, socklen_t option_len) {
+    printf("setsockopt() NOT IMPLEMENTED\n");
 }
 
 ssize_t recv(int socket, void *buffer, size_t length, int flags) {
+    printf("recv()\n");
     assert(flags == 0);
     return read(socket, buffer, length);
 }
 
 ssize_t send(int socket, const void *buffer, size_t length, int flags) {
+    printf("send()\n");
     assert(flags == 0);
     return write(socket, buffer, length);
 }
 
 int bind(int socket, const struct sockaddr *address, socklen_t address_len) {
     //O_RDWR
+    printf("bind() NOT IMPLEMENTED\n");
 }
 
 int getsockname(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len) {
+    printf("getsockname() NOT IMPLEMENTED\n");
 }
 
 int getpeername(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len) {
+    printf("getpeername() NOT IMPLEMENTED\n");
 }
 
 int listen(int socket, int backlog) {
+    printf("listen() NOT IMPLEMENTED\n");
 }
 
 int accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len) {
+    printf("accept() NOT IMPLEMENTED\n");
     //getpeername(socket, address, address_len)
 }
 
 ssize_t recvfrom(int socket, void *restrict buffer, size_t length,
                  int flags, struct sockaddr *restrict address,
                  socklen_t *restrict address_len) {
+    printf("recvfrom()\n");
     int fd = DUP(socket, "listen");
     if (fd == -1)
         return -1; 
@@ -113,6 +138,7 @@ ssize_t recvfrom(int socket, void *restrict buffer, size_t length,
 ssize_t sendto(int socket, const void *message, size_t length,
                int flags, const struct sockaddr *dest_addr,
                socklen_t dest_len) {
+    printf("sendto()\n");
     //XXX
     assert(dest_addr->sa_family == AF_INET);
     char *addr = inet_ntoa(((struct sockaddr_in*)dest_addr)->sin_addr);
@@ -147,6 +173,7 @@ uint16_t ntohs(uint16_t netshort) {
 
 
 struct hostent *gethostbyname(const char *name) {
+    printf("gethostbyname()\n");
     //TODO: handle domain names
 
     if (inet_aton(name, (struct in_addr*)(&_h_addr)) == 0)
