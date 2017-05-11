@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = cygnus
-INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
+INCLUDES = -I$(srcdir)/include $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 AM_CCASFLAGS = $(INCLUDES)
 
 noinst_LIBRARIES = lib.a
@@ -11,7 +11,9 @@ extra_objs = \
     folder.o \
     process.o \
     time.o \
-    unimpl.o
+    unimpl.o \
+    socket.o \
+    poll.o
 else
 extra_objs =
 endif
@@ -25,7 +27,9 @@ EXTRA_lib_a_SOURCES = \
     process.c \
     time.c \
     unimpl.c \
-    crt0.c
+    crt0.c \
+    socket.c \
+    poll.c
 lib_a_DEPENDENCIES = $(extra_objs)
 lib_a_CCASFLAGS = $(AM_CCASFLAGS)
 lib_a_CFLAGS = $(AM_CFLAGS)

@@ -21,10 +21,6 @@ int _fcntl(int file, int cmd, ...){
     UNIMPL(EACCES);
 }
 
-struct hostent * _gethostbyname(const char * name) {
-    return (struct hostent *) NULL;
-}
-
 int _getdtablesize() {
     return 65536;
 }

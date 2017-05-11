@@ -42,6 +42,7 @@ int _lseek(int file, int ptr, int dir) {
 }
 
 int mkdir(const char * path, mode_t mode) {
+    printf("open(%s)\n", path);
     int fd = _open(path, O_CREAT | O_EXCL | O_CLOEXEC | O_DIRECTORY, mode);
     if(fd < 0){
         return fd;
