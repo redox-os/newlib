@@ -5,7 +5,8 @@ use collections::string::ToString;
 use collections::{Vec, String};
 use ::dns::{Dns, DnsQuery};
 use syscall::{self, Result, EINVAL, Error};
-use ::types::{in_addr, hostent, c_char};
+use libc::c_char;
+use ::types::{in_addr, hostent};
 
 static mut HOST_ENTRY: hostent = hostent { h_name: null(), h_aliases: null(), h_addrtype: 0, h_length: 0, h_addr_list: null() };
 static mut HOST_NAME: Option<Vec<u8>> = None;

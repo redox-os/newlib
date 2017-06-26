@@ -1,6 +1,7 @@
 use core::str::{self, FromStr};
 use core::mem;
-use ::types::{c_int, c_char, size_t, c_void, ssize_t, socklen_t, in_addr, sockaddr, sockaddr_in};
+use libc::{c_int, c_char, size_t, c_void, ssize_t};
+use ::types::{socklen_t, in_addr, sockaddr, sockaddr_in};
 use syscall::{self, O_RDWR};
 use syscall::error::{Error, EPROTOTYPE, EPROTONOSUPPORT, EAFNOSUPPORT, EINVAL, EOPNOTSUPP, ENOBUFS};
 use core::slice;

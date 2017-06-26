@@ -1,6 +1,6 @@
 use syscall::{self, O_CLOEXEC, O_STAT, O_CREAT, O_EXCL, O_DIRECTORY, O_WRONLY};
 use core::slice;
-use ::types::{c_int, c_char, off_t, mode_t, c_void};
+use libc::{c_int, c_char, off_t, mode_t, c_void};
 
 pub const PATH_MAX: usize = 4096;
 

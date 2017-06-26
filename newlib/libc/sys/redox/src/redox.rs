@@ -1,5 +1,5 @@
 use syscall;
-use ::types::{c_int, c_char, c_void, size_t};
+use libc::{c_int, c_char, c_void, size_t};
 use core::slice;
 
 libc_fn!(unsafe redox_fevent(file: c_int, flags: c_int) -> Result<c_int> {

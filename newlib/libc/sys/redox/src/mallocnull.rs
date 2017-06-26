@@ -1,5 +1,5 @@
 use core::mem;
-use ::types::{c_void, size_t};
+use libc::{c_void, size_t};
 
 /// Malloc memory if pointer is null, and free on drop
 pub struct MallocNull<T> {

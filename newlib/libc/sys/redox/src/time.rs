@@ -1,7 +1,7 @@
 use syscall;
 use syscall::data::TimeSpec;
 use syscall::error::{Error, EFAULT};
-use ::types::{c_int, c_void, time_t, c_long};
+use libc::{c_int, c_void, time_t, c_long};
 
 pub struct TimeVal {
     pub tv_sec: time_t,

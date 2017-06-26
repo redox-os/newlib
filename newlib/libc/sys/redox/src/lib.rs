@@ -7,10 +7,11 @@ extern crate collections;
 extern crate compiler_builtins;
 extern crate byteorder;
 extern crate alloc;
+extern crate libc;
 
 use core::{ptr, mem, intrinsics, slice};
 use collections::Vec;
-use ::types::{c_int, c_void, c_char, size_t};
+use libc::{c_int, c_void, c_char, size_t};
 
 #[macro_use]
 mod macros;
