@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define PATH_DELIM ':'
+#define PATH_DELIM ';'
 
 /*
  * Copy string, until c or <nul> is encountered.

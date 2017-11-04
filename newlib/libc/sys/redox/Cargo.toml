@@ -1,0 +1,18 @@
+[package]
+name = "newlib_redox"
+version = "0.1.0"
+
+[lib]
+name = "newlib_redox"
+crate-type = ["staticlib"]
+
+[profile.release]
+lto = true
+panic = "abort"
+
+[dependencies]
+byteorder = { version = "1", default-features = false }
+compiler_builtins = { git = "https://github.com/rust-lang-nursery/compiler-builtins" }
+libc = { git = "https://github.com/redox-os/liblibc", default-features = false }
+redox_syscall = "0.1"
+redox_termios = "0.1"

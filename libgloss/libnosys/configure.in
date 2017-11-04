@@ -41,6 +41,8 @@ dnl Make sure syscall names match those being used by newlib
 case "${target}" in
   *-*-cygwin*)
 	;;
+  *-*-redox*)
+	;;
   a29k-amd-udi)
 	;;
   arc-*-*)
@@ -54,9 +56,9 @@ case "${target}" in
   d10v*)
 	;;
   h8300*-*-*)
-	;;	
+	;;
   h8500-*-*)
-	;;	
+	;;
   i[3456]86-*-sco*)
 	;;
   lm32-*-*)
@@ -76,7 +78,7 @@ case "${target}" in
   v850*-*-*)
 	;;
   w65-*-*)
-	;;	
+	;;
   xstormy16-*-*)
 	;;
   z8k-*-*)
@@ -192,5 +194,3 @@ CONFIG_SHELL=${CONFIG_SHELL-/bin/sh}
 libgloss_topdir=${libgloss_topdir}
 )
 AC_OUTPUT
-
-

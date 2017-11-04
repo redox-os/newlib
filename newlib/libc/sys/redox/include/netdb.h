@@ -1,0 +1,16 @@
+#ifndef _NETDB_H
+#define _NETDB_H
+
+struct hostent {
+    char *h_name;
+    char **h_aliases;
+    int h_addrtype;
+    int h_length;
+    char **h_addr_list;
+};
+
+struct hostent *gethostbyname(const char *name);
+
+#define h_addr h_addr_list[0]
+
+#endif
