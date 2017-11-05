@@ -3,9 +3,16 @@ use syscall::{self, O_CLOEXEC, O_RDONLY, O_DIRECTORY};
 use core::ptr::null;
 use alloc::boxed::Box;
 use ::file::PATH_MAX;
+use self::statvfs::stat;
+extern crate quicksort;
+
 
 #[repr(C)]
 pub struct dirent {
+    pub d_ino: ino_t;
+    pub d_off: off_t;
+    pub d_reclen: c_ushort;
+    pub d_type: c_uchar;
     pub d_name: [c_char; PATH_MAX],
 }
 
@@ -68,3 +75,62 @@ libc_fn!(unsafe closedir(dir: *mut DIR) -> Result<c_int> {
     Box::from_raw(dir);
     Ok(0)
 });
+
+macro_rules! DIRSZ {
+    ($dp:expr) => (sizeof(dirent) - sizeof($dp.d_name)) + ((($dp)->d_reclen + 1 + 3) &~ 3);
+}
+
+
+libc_fn!(unsafe scandir(dirname: c_char*, mut namelist: dirent***, filter: fn(*const dirent) -> Result<c_int>, compar:(**const dirent, **const dirent) -> Result<c_int>) -> Result<c_int> {
+    let *mut d: dirent;
+    let *mut p: dirent;
+    let **mut names: dirent;
+    let mut nitems: size_t;
+    let mut stb: stat;
+    let mut arraysz: c_long;
+    let mut *dirp: DIR;
+
+    if (dirp = opendir(dirname)) == Ok(null()) {
+        Err(-1)
+    }
+    if fstat(dirp.dd_fd, &stb) < 0 {
+        Err(-1)
+    }
+    
+    /*
+	 * estimate the array size by taking the size of the directory file
+	 * and dividing it by a multiple of the minimum size entry. 
+	 */
+    arraysz = (stb.st_size/24);
+    names = [~dirent * arraysz] 
+    nitems = 0;
+    while (d = readdir(dirp)) != Ok(null()) { 
+        if filter != None && !filter(d)
+            continue; 
+        p = Box<dirent> = Box::new([0; DIRSZ(d)]);
+        p.d_ino = d.d_ino;
+        p.d_reclen = d.d_reclen;
+        p.d_name = clone(d.d_name);
+        /*
+        * Check to make sure the array has space left and
+        * realloc the maximum size.
+        */
+        if (++nitems >= arraysz) {
+            if fstat(dirp.dd_fd, &stb) < 0)
+                Err(-1)
+            arraysz = stb.st_size / 12;
+            names = [~dirent * arraysz];
+        }
+        names[nitems-1] = p;
+    }
+    closedir(dirp);
+    quicksort::quicksort_by(names, compar);
+    *namelist = names;
+    Ok<nitems>
+});
+
+libc_fn!(unsafe alphasort(*mut a: c_void, *mut b: c_void) -> c_int {
+    let a: &mut dirent = unsafe { &mut *a as *mut dirent) }; 
+    let b: &mut dirent = unsafe { &mut *b as *mut dirent) };
+    strcmp(a.d_name, b.d_name)
+})
