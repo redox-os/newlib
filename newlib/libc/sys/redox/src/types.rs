@@ -13,6 +13,25 @@ pub type sa_family_t = u16;
 pub type socklen_t = libc::size_t;
 pub type in_port_t = [u8; 2];
 
+// Statvfs types
+pub type dev_t = libc::c_ulong;
+pub type ino_t = libc::c_ulong;
+pub type mode_t = libc::c_uint;
+pub type nlink_t = libc::c_ulong;
+pub type uid_t = libc::c_uint;
+pub type gid_t = libc::c_uint;
+pub type off_t = libc::c_long;
+pub type blksize_t = libc::c_long;
+pub type blkcnt_t = libc::c_long;
+pub type fsblkcnt_t = libc::c_ulong;
+pub type fsfilcnt_t = libc::c_ulong;
+pub type __fsword_t = libc::c_long;
+
+#[repr(C)]
+pub struct fsid_t {
+    __val: [libc::c_int; 2]
+}
+
 #[repr(C)]
 pub struct in_addr {
     pub s_addr: in_addr_t

@@ -11,6 +11,8 @@
     global_allocator,
     lang_items,
     linkage,
+    type_ascription,
+    pointer_methods
 )]
 
 #[macro_use]
@@ -42,6 +44,7 @@ pub mod redox;
 pub mod socket;
 pub mod hostname;
 pub mod termios;
+pub mod statvfs;
 
 pub use mallocnull::MallocNull;
 pub use rawfile::RawFile;
@@ -86,16 +89,16 @@ pub unsafe extern "C" fn __errno_location() -> *mut c_int {
 }
 
 #[lang = "eh_personality"]
-pub extern "C" fn eh_personality() {}
+//pub extern "C" fn eh_personality() {}
 
 #[lang = "panic_fmt"]
 #[linkage = "weak"]
 #[no_mangle]
-pub extern fn rust_begin_panic(_msg: core::fmt::Arguments,
+/*pub extern fn rust_begin_panic(_msg: core::fmt::Arguments,
                                _file: &'static str,
                                _line: u32) -> ! {
     unsafe { intrinsics::abort() }
-}
+}*/
 
 libc_fn!(unsafe initialize_standard_library() {
     let mut buf = file_read_all("env:").unwrap();
