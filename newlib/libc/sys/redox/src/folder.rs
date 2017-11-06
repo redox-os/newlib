@@ -1,10 +1,12 @@
-#![feature(pointer_methods)]
 use ::{c_int, c_char};
 extern crate std;
-use syscall::{self, O_CLOEXEC, O_RDONLY, O_DIRECTORY};
+extern crate libc;
+extern crate core;
+use syscall::{self, O_CLOEXEC, O_RDONLY, O_DIRECTORY, Stat};
 use core::ptr::null;
+use core::default::Default;
 use alloc::boxed::Box;
-use alloc::raw_vec::RawVec;
+use alloc::Vec;
 use ::file::PATH_MAX;
 use libc::*;
 extern crate quicksort;
@@ -15,7 +17,18 @@ pub struct dirent {
     pub d_off: off_t,
     pub d_reclen: c_ushort,
     pub d_type: c_uchar,
-    pub d_name: [c_char; PATH_MAX],
+    pub d_name: [c_char; PATH_MAX]
+}
+impl core::default::Default for dirent {
+    fn default() -> dirent {
+        dirent {
+            d_ino: 0,
+            d_off: 0,
+            d_reclen: 0,
+            d_type: 0,
+            d_name: [0; 4096],
+        }
+    }
 }
 
 pub struct DIR {
@@ -83,21 +96,23 @@ libc_fn!(unsafe closedir(dir: *mut DIR) -> Result<c_int> {
 }*/
 
 
-libc_fn!(unsafe scandir(dirname: *mut c_char, namelist: *mut *mut *mut dirent, filter: fn(*const dirent) -> Result<c_int, std::result::Result::Err>, compar: fn(*const *const dirent, *const *const dirent) -> Result<c_int, std::result::Result::Err>) -> Result<c_int, std::result::Result::Err> {
-    let d: *mut dirent;
-    let p: *mut dirent;
-    let names: RawVec<*mut dirent>;
-    let mut nitems: size_t;
-    let mut stb: libc::stat;
-    let mut arraysz: c_long;
-    let mut dirp: DIR;
+libc_fn!(unsafe scandir(dirname: *mut c_char, namelist: *mut *mut *mut dirent, filter: fn(*const dirent) -> Result<libc::c_int, libc::c_int>, compar: for<'r, 's> fn(&'r *mut dirent, &'s *mut dirent) -> core::cmp::Ordering) -> Result<c_int, c_int> {
+    let mut d: dirent = dirent::default();
+    let mut p: dirent = dirent::default();
+    let mut names: Vec<*mut dirent> = Vec::new();
+    let mut nitems: size_t = 0;
+    let mut stb: syscall::Stat = Stat::default();
+    let mut arraysz: c_ulong = 0;
+    let dirp: *mut DIR;
 
-    dirp = opendir(dirname).read();
-    if !dirp.is_ok() { 
-        Err(-1);
+    dirp = opendir(dirname);
+    if dirp.is_null() { 
+        return Err(-1);
     }
-    if ::call::fstat(dirp.fd, &stb) < 0 {
-        Err(-1);
+    if let Some(dirp) = dirp.as_mut() {
+    
+    if syscall::call::fstat(*dirp.fd, &mut stb).unwrap() < 0 {
+        return Err(-1);
     }
     
     /*
@@ -105,29 +120,31 @@ libc_fn!(unsafe scandir(dirname: *mut c_char, namelist: *mut *mut *mut dirent, f
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
     arraysz = stb.st_size/24;
-    names = RawVec::with_capacity(arraysz as usize);
     nitems = 0;
-    while (d = readdir(dirp.as_mut())).is_ok()  { 
-        if filter != None && !filter(d)
+    while {let d = readdir(dirp); !d.is_null()}   { 
+    if !filter(&mut d).is_ok()
             { continue; } 
         //p = Box<dirent> = Box::new([0; DIRSZ(d)]);
-        (*p).d_ino = (*d).d_ino;
-        (*p).d_reclen = (*d).d_reclen;
-        (*p).d_name = (*d).d_name;
+        p.d_ino = d.d_ino;
+        p.d_reclen = d.d_reclen;
+        p.d_name = d.d_name;
+        nitems+=1;
+        names.set_len(nitems);
         /*
         * Check to make sure the array has space left and
         * realloc the maximum size.
         */
         if nitems+1 >= arraysz as usize {
-            if ::call::fstat(dirp.fd, &stb) < 0
-                { Err(-1); }
-            names.double()
+            if syscall::call::fstat(*dirp.fd, &mut stb).unwrap() < 0
+                { return Err(-1); }
+            names.reserve(arraysz as usize); //double the capacity
         }
-        names[nitems-1] = p;
+        names[nitems-1] = &mut p;
+        }
     }
-    closedir(dirp.as_mut());
-    quicksort::quicksort_by(&names.ptr(), compar);
-    *namelist = names.ptr();
+    closedir(dirp);
+    quicksort::quicksort_by(names.as_mut(), compar);
+    *namelist = names.as_mut_ptr();
     Ok(nitems as i32)
 });
 

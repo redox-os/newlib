@@ -55,13 +55,13 @@ enum Flags {
     NoSUID  = 2
 }
 
-libc_fn!(stat(c_path: *const libc::c_char, c_buf: stat) -> Result<libc::c_int> {
+libc_fn!(unsafe stat(c_path: *const libc::c_char, c_buf: &mut stat) -> Result<libc::c_int> {
     let path = ::cstr_to_slice(c_path);
     let fd = ::syscall::call::open(path, O_STAT).unwrap();
     let mut buf = Stat::default();
     ::syscall::call::fstat(fd, &mut buf);
     let _ = ::syscall::close(fd);
-    c_buf = stat {
+    let c_buf = &mut stat {
         st_dev: buf.st_dev as dev_t,
         st_ino: buf.st_ino as ino_t,
         st_mode: buf.st_mode as mode_t,
@@ -78,17 +78,17 @@ libc_fn!(stat(c_path: *const libc::c_char, c_buf: stat) -> Result<libc::c_int> {
     Ok(0)
 });
 
-libc_fn!(statvfs(c_path: *const libc::c_char, c_buf: statvfs) -> Result<libc::c_int> {
+libc_fn!(unsafe statvfs(c_path: *const libc::c_char, c_buf: &mut statvfs) -> Result<libc::c_int> {
     let path = ::cstr_to_slice(c_path);
     let fd = ::syscall::call::open(path, O_STAT).unwrap();
     Ok(fstatvfs(fd as i32, c_buf))
 });
 
-libc_fn!(fstatvfs(fd: libc::c_int, c_buf: statvfs) -> Result<libc::c_int> {
+libc_fn!(fstatvfs(fd: libc::c_int, c_buf: *mut statvfs) -> Result<libc::c_int> {
     let mut buf = StatVfs::default();
     ::syscall::call::fstatvfs(fd as usize, &mut buf);
     let _ = ::syscall::close(fd as usize);
-    c_buf = statvfs {
+    unsafe {*c_buf = statvfs {
         f_bsize: buf.f_bsize as libc::c_ulong,
       //  f_frsize: &buf.f_frsize as libc::c_ulong,
         f_blocks: buf.f_blocks as fsblkcnt_t,
@@ -99,6 +99,6 @@ libc_fn!(fstatvfs(fd: libc::c_int, c_buf: statvfs) -> Result<libc::c_int> {
       //  f_fsid: &buf.f_fsid as libc::c_ulong,
       //  f_flag: &buf.f_flag as libc::c_ulong,
       //  f_namemax: &buf.f_namemax as libc::c_ulong,
-    };
+    }};
     Ok(0)
 });
