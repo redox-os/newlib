@@ -10,6 +10,7 @@
     global_allocator,
     lang_items,
     linkage,
+    thread_local,
 )]
 
 #[macro_use]
@@ -42,6 +43,7 @@ pub mod redox;
 pub mod socket;
 pub mod hostname;
 pub mod termios;
+pub mod threads;
 
 pub use mallocnull::MallocNull;
 pub use rawfile::RawFile;

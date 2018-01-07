@@ -1,0 +1,3 @@
+[submodule "newlib/libc/sys/redox/pthreads-emb"]
+	path = newlib/libc/sys/redox/pthreads-emb
+	url = https://github.com/redox-os/pthreads-emb
