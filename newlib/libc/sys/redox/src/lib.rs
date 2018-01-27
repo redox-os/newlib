@@ -10,6 +10,8 @@
     global_allocator,
     lang_items,
     linkage,
+    const_size_of,
+    const_cell_new,
 )]
 
 #[macro_use]
@@ -22,7 +24,10 @@ extern crate syscall;
 extern crate redox_termios;
 
 use alloc::Vec;
-use core::{ptr, mem, intrinsics, slice};
+use alloc::String;
+use alloc::fmt::Write;
+use alloc::boxed::Box;
+use core::{ptr, mem, intrinsics, slice, str};
 use libc::{c_int, c_void, c_char, size_t};
 
 #[macro_use]
@@ -42,6 +47,7 @@ pub mod redox;
 pub mod socket;
 pub mod hostname;
 pub mod termios;
+pub mod netdb;
 
 pub use mallocnull::MallocNull;
 pub use rawfile::RawFile;
@@ -49,7 +55,7 @@ pub use rawfile::RawFile;
 #[global_allocator]
 static ALLOCATOR: alloc_system::System = alloc_system::System;
 
-extern {
+extern "C" {
     // Newlib uses this function instead of just a global to support reentrancy
     pub fn __errno() -> *mut c_int;
     pub fn malloc(size: size_t) -> *mut c_void;
@@ -62,7 +68,7 @@ extern {
 pub unsafe fn cstr_to_slice<'a>(buf: *const c_char) -> &'a [u8] {
     slice::from_raw_parts(buf as *const u8, ::strlen(buf) as usize)
 }
-pub unsafe fn cstr_to_slice_mut<'a>(buf: *const c_char) ->  &'a mut [u8] {
+pub unsafe fn cstr_to_slice_mut<'a>(buf: *const c_char) -> &'a mut [u8] {
     slice::from_raw_parts_mut(buf as *mut u8, ::strlen(buf) as usize)
 }
 
@@ -80,6 +86,83 @@ pub fn file_read_all<T: AsRef<[u8]>>(path: T) -> syscall::Result<Vec<u8>> {
     Ok(buf)
 }
 
+/// Implements an `Iterator` which returns on either newline or EOF.
+#[derive(Clone, Copy)]
+pub struct RawLineBuffer {
+    fd: usize,
+    cur: usize,
+    read: usize,
+    buf: [u8; 8 * 1024],
+}
+
+impl Default for RawLineBuffer {
+    fn default() -> RawLineBuffer {
+        RawLineBuffer {
+            fd: 0,
+            cur: 0,
+            read: 0,
+            buf: unsafe { mem::uninitialized() },
+        }
+    }
+}
+
+impl RawLineBuffer {
+    fn new(fd: usize) -> RawLineBuffer {
+        RawLineBuffer {
+            fd: fd,
+            cur: 0,
+            read: 0,
+            buf: unsafe { mem::uninitialized() },
+        }
+    }
+}
+
+impl Iterator for RawLineBuffer {
+    type Item = syscall::Result<Box<str>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.cur != 0 && self.read != 0 {
+            if let Some(mut pos) = self.buf[self.cur..self.read].iter().position(
+                |&x| x == b'\n',
+            )
+            {
+                pos += self.cur + 1;
+                let line = unsafe { str::from_utf8_unchecked(&self.buf[self.cur..pos]) };
+                let boxed_array: Box<[u8]> = Box::from(line.as_bytes());
+                let boxed_line: Box<str> = unsafe { mem::transmute(boxed_array) };
+                self.cur = pos;
+                return Some(Ok(boxed_line));
+            }
+
+            let mut temp: [u8; 8 * 1024] = unsafe { mem::uninitialized() };
+            unsafe {
+                ptr::copy(self.buf[self.cur..].as_ptr(), temp.as_mut_ptr(), self.read);
+                ptr::swap(self.buf.as_mut_ptr(), temp.as_mut_ptr());
+            };
+
+            self.read -= self.cur;
+            self.cur = 0;
+        }
+
+        let end = match syscall::read(self.fd, &mut self.buf[self.cur..]).unwrap() {
+            0 => return None,
+            read => {
+                self.read += read;
+                self.buf[..self.read]
+                    .iter()
+                    .position(|&x| x == b'\n')
+                    .unwrap_or(0)
+            }
+        };
+
+        self.cur = end;
+        let line = unsafe { str::from_utf8_unchecked(&self.buf[..end]) };
+        let boxed_array: Box<[u8]> = Box::from(line.as_bytes());
+        let boxed_line: Box<str> = unsafe { mem::transmute(boxed_array) };
+
+        Some(Ok(boxed_line))
+    }
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn __errno_location() -> *mut c_int {
     __errno()
@@ -95,6 +178,12 @@ pub extern "C" fn rust_begin_unwind(_msg: core::fmt::Arguments,
                                _file: &'static str,
                                _line: u32,
                                _col: u32) -> ! {
+   let mut s = String::new();
+    let _ = s.write_fmt(_msg);
+    let _ = syscall::write(2, _file.as_bytes());
+    let _ = syscall::write(2, "\n".as_bytes());
+    let _ = syscall::write(2, s.as_bytes());
+    let _ = syscall::write(2, "\n".as_bytes());
     unsafe { intrinsics::abort() }
 }
 

@@ -33,6 +33,7 @@ pub struct fsid_t {
 }
 
 #[repr(C)]
+#[derive(Clone,Copy)]
 pub struct in_addr {
     pub s_addr: in_addr_t
 }

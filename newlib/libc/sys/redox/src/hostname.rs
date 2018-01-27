@@ -98,34 +98,6 @@ fn lookup_host(host: &str) -> Result<LookupHost> {
     }
 }
 
-libc_fn!(unsafe gethostbyname(name: *const c_char) -> Result<*const hostent> {
-    // XXX h_errno
-    let mut addr = mem::uninitialized();
-    let host_addr = if ::socket::inet_aton(name, &mut addr) == 1 {
-        addr
-    } else {
-        // XXX
-        let mut host = lookup_host(str::from_utf8_unchecked(::cstr_to_slice(name)))?;
-        host.next().ok_or(Error::new(syscall::ENOENT))? // XXX
-    };
-
-    let host_name: Vec<u8> = ::cstr_to_slice(name).to_vec();
-    HOST_ADDR_LIST = [host_addr.s_addr.as_ptr() as *const c_char, null()];
-    HOST_ADDR = Some(host_addr);
-
-    HOST_ENTRY = hostent {
-        h_name: host_name.as_ptr() as *const c_char,
-        h_aliases: HOST_ALIASES.as_ptr(),
-        h_addrtype: ::socket::AF_INET,
-        h_length: 4,
-        h_addr_list: HOST_ADDR_LIST.as_ptr()
-    };
-
-    HOST_NAME = Some(host_name);
-
-    Ok(&HOST_ENTRY as *const hostent)
-});
-
 libc_fn!(unsafe gethostname(name: *mut c_char, namelen: size_t) -> Result<c_int> {
     let slice = slice::from_raw_parts_mut(name as *mut u8, namelen);
     let fd = ::RawFile::open("/etc/hostname", syscall::O_RDONLY)?;
