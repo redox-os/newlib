@@ -3,7 +3,6 @@
     alloc,
     allocator_api,
     alloc_system,
-    compiler_builtins_lib,
     const_fn,
     const_ptr_null,
     core_intrinsics,
@@ -18,7 +17,6 @@
 extern crate alloc;
 extern crate alloc_system;
 extern crate byteorder;
-extern crate compiler_builtins;
 extern crate libc;
 extern crate syscall;
 extern crate redox_termios;
@@ -185,6 +183,11 @@ pub extern "C" fn rust_begin_unwind(_msg: core::fmt::Arguments,
     let _ = syscall::write(2, s.as_bytes());
     let _ = syscall::write(2, "\n".as_bytes());
     unsafe { intrinsics::abort() }
+}
+
+#[lang = "oom"]
+pub extern fn rust_oom() -> ! {
+    panic!("memory allocation failed");
 }
 
 libc_fn!(unsafe initialize_standard_library() {
