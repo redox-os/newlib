@@ -186,6 +186,7 @@ pub extern "C" fn rust_begin_unwind(_msg: core::fmt::Arguments,
 }
 
 #[lang = "oom"]
+#[linkage = "weak"]
 #[no_mangle]
 pub extern fn rust_oom() -> ! {
     panic!("memory allocation failed");
