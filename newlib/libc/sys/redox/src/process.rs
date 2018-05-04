@@ -190,7 +190,9 @@ libc_fn!(unsafe setuid(uid: uid_t) -> Result<c_int> {
 libc_fn!(unsafe _wait(status: *mut c_int) -> Result<c_int> {
     let mut buf = 0;
     let res = syscall::waitpid(0, &mut buf, 0)?;
-    *status = buf as c_int;
+    if !status.is_null() {
+        *status = buf as c_int;
+    }
     Ok(res as c_int)
 });
 
@@ -202,6 +204,8 @@ libc_fn!(unsafe waitpid(pid: pid_t, status: *mut c_int, options: c_int) -> Resul
         pid as usize
     };
     let res = syscall::waitpid(pid as usize, &mut buf, options as usize)?;
-    *status = buf as c_int;
+    if !status.is_null() {
+        *status = buf as c_int;
+    }
     Ok(res as c_int)
 });
