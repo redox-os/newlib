@@ -1,6 +1,6 @@
 [[package]]
 name = "byteorder"
-version = "1.2.2"
+version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -12,15 +12,15 @@ source = "git+https://github.com/redox-os/liblibc#297fc414c3225631e879ff87006ce4
 name = "newlib_redox"
 version = "0.1.0"
 dependencies = [
- "byteorder 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.40 (git+https://github.com/redox-os/liblibc)",
- "redox_syscall 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redox_syscall 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)",
  "redox_termios 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "redox_syscall"
-version = "0.1.37"
+version = "0.1.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -28,11 +28,11 @@ name = "redox_termios"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "redox_syscall 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redox_syscall 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [metadata]
-"checksum byteorder 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "73b5bdfe7ee3ad0b99c9801d58807a9dbc9e09196365b0203853b99889ab3c87"
+"checksum byteorder 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "74c0b906e9446b0a2e4f760cdb3fa4b2c48cdc6db8766a845c54b6ff063fd2e9"
 "checksum libc 0.2.40 (git+https://github.com/redox-os/liblibc)" = "<none>"
-"checksum redox_syscall 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)" = "0d92eecebad22b767915e4d529f89f28ee96dbbf5a4810d2b844373f136417fd"
+"checksum redox_syscall 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)" = "0a12d51a5b5fd700e6c757f15877685bfa04fd7eb60c108f01d045cafa0073c2"
 "checksum redox_termios 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "7e891cfe48e9100a70a3b6eb652fef28920c117d366339687bd5576160db0f76"

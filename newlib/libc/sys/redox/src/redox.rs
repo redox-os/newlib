@@ -2,10 +2,6 @@ use syscall;
 use libc::{c_int, c_char, c_void, size_t};
 use core::slice;
 
-libc_fn!(unsafe redox_fevent(file: c_int, flags: c_int) -> Result<c_int> {
-    Ok(syscall::fevent(file as usize, flags as usize)? as c_int)
-});
-
 libc_fn!(unsafe redox_fpath(file: c_int, buf: *mut c_char, len: size_t) -> Result<c_int> {
     let buf = slice::from_raw_parts_mut(buf as *mut u8, len);
     Ok(syscall::fpath(file as usize, buf)? as c_int)

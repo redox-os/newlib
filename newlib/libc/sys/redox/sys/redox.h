@@ -8,7 +8,6 @@ extern "C" {
 #include <_ansi.h>
 #include <stddef.h>
 
-int _EXFUN(redox_fevent, (int file, int flags));
 int _EXFUN(redox_fpath, (int file, char *buf, size_t len));
 void *_EXFUN(redox_fmap, (int file, size_t offset, size_t size));
 int _EXFUN(redox_funmap, (void *addr));
