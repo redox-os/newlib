@@ -1,8 +1,8 @@
 use core::ptr::null;
-use core::{mem, str, slice};
+use core::{str, slice};
 use alloc::vec::IntoIter;
 use alloc::string::ToString;
-use alloc::{Vec, String};
+use alloc::{vec::Vec, string::String};
 use ::dns::{Dns, DnsQuery};
 use syscall::{self, Result, EINVAL, Error};
 use libc::{c_char, size_t, c_int};

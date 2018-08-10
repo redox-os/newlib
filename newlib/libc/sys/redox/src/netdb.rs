@@ -5,7 +5,7 @@ use core::ptr::null;
 use core::{mem, str};
 use alloc::vec::IntoIter;
 use alloc::string::ToString;
-use alloc::{Vec, String};
+use alloc::{vec::Vec, string::String};
 use alloc::str::SplitWhitespace;
 use alloc::boxed::Box;
 use dns::{Dns, DnsQuery};

@@ -6,11 +6,12 @@
     const_fn,
     const_ptr_null,
     core_intrinsics,
-    global_allocator,
     lang_items,
     linkage,
     const_size_of,
     const_cell_new,
+    panic_implementation,
+    panic_info_message
 )]
 
 #[macro_use]
@@ -21,11 +22,12 @@ extern crate libc;
 extern crate syscall;
 extern crate redox_termios;
 
-use alloc::Vec;
-use alloc::String;
+use alloc::vec::Vec;
+use alloc::string::String;
 use alloc::fmt::Write;
 use alloc::boxed::Box;
 use core::{ptr, mem, intrinsics, slice, str};
+use core::panic::PanicInfo;
 use libc::{c_int, c_void, c_char, size_t};
 
 #[macro_use]
@@ -169,26 +171,29 @@ pub unsafe extern "C" fn __errno_location() -> *mut c_int {
 #[lang = "eh_personality"]
 pub extern "C" fn eh_personality() {}
 
-#[lang = "panic_fmt"]
+#[panic_implementation]
 #[linkage = "weak"]
 #[no_mangle]
-pub extern "C" fn rust_begin_unwind(_msg: core::fmt::Arguments,
-                               _file: &'static str,
-                               _line: u32,
-                               _col: u32) -> ! {
-   let mut s = String::new();
-    let _ = s.write_fmt(_msg);
-    let _ = syscall::write(2, _file.as_bytes());
-    let _ = syscall::write(2, "\n".as_bytes());
-    let _ = syscall::write(2, s.as_bytes());
-    let _ = syscall::write(2, "\n".as_bytes());
+pub extern "C" fn rust_begin_unwind(info: &PanicInfo) -> ! {
+    if let Some(loc) = info.location() {
+        let _ = syscall::write(2, loc.file().as_bytes());
+        let _ = syscall::write(2, "\n".as_bytes());
+    }
+    if let Some(msg) = info.message() {
+        let mut s = String::new();
+        // Currently, a clone is pretty cheap.
+        // The struct is just a bunch of slices.
+        let _ = s.write_fmt(msg.clone());
+        let _ = syscall::write(2, s.as_bytes());
+        let _ = syscall::write(2, "\n".as_bytes());
+    }
     unsafe { intrinsics::abort() }
 }
 
 #[lang = "oom"]
 #[linkage = "weak"]
 #[no_mangle]
-pub extern fn rust_oom() -> ! {
+pub extern fn rust_oom(_: core::alloc::Layout) -> ! {
     panic!("memory allocation failed");
 }
 
