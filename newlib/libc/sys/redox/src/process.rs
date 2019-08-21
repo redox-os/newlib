@@ -1,7 +1,7 @@
 use libc::{c_char, c_int, c_void, size_t, gid_t, uid_t, ptrdiff_t};
 use ::types::pid_t;
 use core::slice;
-use alloc::Vec;
+use alloc::vec::Vec;
 use syscall::error::{Error, EINVAL};
 use syscall;
 
